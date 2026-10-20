@@ -2,21 +2,16 @@ FROM python:3.13-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.13.1 /uv /usr/local/bin/uv
 
+# The virtualenv lives outside /app, so the mounted project folder does not hide it.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_PROJECT_ENVIRONMENT=/opt/venv \
-    UV_PYTHON_DOWNLOADS=never \
     PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock ./
-RUN uv sync --locked --no-cache
-
 COPY . .
-
-RUN useradd --create-home appuser
-USER appuser
+RUN uv sync --locked
 
 EXPOSE 8000
 

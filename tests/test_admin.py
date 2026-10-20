@@ -12,12 +12,9 @@ pytestmark = pytest.mark.django_db
         factories.UserFactory,
         factories.AccountFactory,
         factories.CategoryFactory,
-        factories.TransferFactory,
         factories.TransactionFactory,
-        factories.ExchangeRateFactory,
+        factories.TransferFactory,
         factories.BudgetFactory,
-        factories.BudgetNotificationFactory,
-        factories.TransactionImportFactory,
     ],
 )
 def test_admin_pages_open(admin_client, factory):

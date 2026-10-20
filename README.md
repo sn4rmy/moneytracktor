@@ -1,7 +1,7 @@
 # moneytracktor
 
-REST API for personal finance tracking: accounts, income and expenses, budgets,
-reports and multiple currencies with KZT as the default base currency.
+REST API for personal finance tracking: accounts, income and expenses, transfers between
+accounts, budgets and reports. All amounts are in Kazakhstani tenge (KZT).
 
 Work in progress.
 
@@ -15,8 +15,8 @@ Python 3.13, Django 5.2 LTS, PostgreSQL 18, Celery with Redis, uv, pytest, ruff,
 docker compose up --build
 ```
 
-This starts the web server (http://localhost:8000), PostgreSQL, Redis, a Celery worker
-and Celery beat. Migrations are applied on startup.
+This starts the web server (http://localhost:8000), PostgreSQL, Redis and a Celery worker.
+Migrations are applied on startup.
 
 Create an admin user:
 

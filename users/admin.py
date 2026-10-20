@@ -6,21 +6,7 @@ from .models import User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ("username", "email", "base_currency", "is_staff")
-    fieldsets = BaseUserAdmin.fieldsets + (("Finance", {"fields": ("base_currency",)}),)
+    # The default "add user" form has no email field, but our email is required.
     add_fieldsets = (
-        (
-            None,
-            {
-                "classes": ("wide",),
-                "fields": (
-                    "username",
-                    "email",
-                    "base_currency",
-                    "usable_password",
-                    "password1",
-                    "password2",
-                ),
-            },
-        ),
+        (None, {"fields": ("username", "email", "usable_password", "password1", "password2")}),
     )

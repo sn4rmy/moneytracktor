@@ -20,9 +20,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "users",
     "finance",
-    "rates",
     "budgets",
-    "imports",
 ]
 
 MIDDLEWARE = [
@@ -71,11 +69,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
-MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")
-CELERY_TIMEZONE = TIME_ZONE
-CELERY_BEAT_SCHEDULE = {}

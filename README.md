@@ -7,7 +7,19 @@ Work in progress.
 
 ## Stack
 
-Python 3.13, Django 5.2 LTS, PostgreSQL 18, Celery with Redis, uv, pytest, ruff, Docker Compose.
+Python 3.13, Django 5.2 LTS, Django REST Framework, Simple JWT, PostgreSQL 18, Celery with Redis,
+uv, pytest, ruff, Docker Compose.
+
+## API
+
+| Method | URL | Auth | Description |
+|---|---|---|---|
+| POST | `/api/auth/register` | no | Create a user with default categories |
+| POST | `/api/auth/token` | no | Get access and refresh tokens |
+| POST | `/api/auth/token/refresh` | no | Get a new access token |
+| GET | `/api/me` | yes | Current user |
+
+Authenticated requests send the access token in the header `Authorization: Bearer <token>`.
 
 ## Running with Docker
 

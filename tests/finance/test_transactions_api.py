@@ -5,7 +5,7 @@ import pytest
 from django.urls import reverse
 
 from finance.models import Transaction
-from tests.factories import AccountFactory, CategoryFactory, TransactionFactory
+from tests.factories import AccountFactory, CategoryFactory, TransactionFactory, TransferFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -144,6 +144,40 @@ def test_other_users_transaction_returns_404(auth_client):
     assert response.status_code == 404
     transaction.refresh_from_db()
     assert transaction.amount == Decimal("100.00")
+
+
+def test_transfer_transaction_is_listed_without_category(auth_client, user):
+    transfer = TransferFactory(user=user)
+    TransactionFactory(user=user, category=None, transfer=transfer)
+
+    response = auth_client.get(LIST_URL)
+
+    result = response.data["results"][0]
+    assert result["transfer"] == transfer.id
+    assert result["category"] is None
+    assert result["category_name"] is None
+
+
+def test_transfer_transaction_cannot_be_changed(auth_client, user):
+    transaction = TransactionFactory(
+        user=user, category=None, transfer=TransferFactory(user=user), amount=Decimal("100.00")
+    )
+
+    response = auth_client.patch(detail_url(transaction), {"amount": "1.00"})
+
+    assert response.status_code == 400
+    transaction.refresh_from_db()
+    assert transaction.amount == Decimal("100.00")
+
+
+def test_transfer_transaction_cannot_be_deleted(auth_client, user):
+    transaction = TransactionFactory(user=user, category=None, transfer=TransferFactory(user=user))
+
+    response = auth_client.delete(detail_url(transaction))
+
+    assert response.status_code == 400
+    assert "detail" in response.data
+    assert Transaction.objects.filter(id=transaction.id).exists()
 
 
 def test_transactions_without_token_return_401(api_client):

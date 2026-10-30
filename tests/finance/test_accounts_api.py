@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 from django.urls import reverse
 
@@ -17,12 +19,39 @@ def test_list_returns_only_own_accounts(auth_client, user):
     assert [account["id"] for account in response.data] == [own.id]
 
 
+def test_accounts_are_sorted_by_name(auth_client, user):
+    AccountFactory(user=user, name="Kaspi Gold")
+    AccountFactory(user=user, name="Deposit")
+
+    response = auth_client.get(reverse("account-list"))
+
+    assert [account["name"] for account in response.data] == ["Deposit", "Kaspi Gold"]
+
+
 def test_create_account(auth_client, user):
     response = auth_client.post(reverse("account-list"), {"name": "Kaspi Gold", "type": "card"})
 
     assert response.status_code == 201
     assert response.data["name"] == "Kaspi Gold"
+    assert response.data["balance"] == "0.00"
     assert Account.objects.get(id=response.data["id"]).user == user
+
+
+def test_account_response_contains_balance(auth_client, user):
+    account = AccountFactory(user=user)
+    TransactionFactory(
+        user=user,
+        account=account,
+        type="income",
+        category__type="income",
+        amount=Decimal("10000.00"),
+    )
+    TransactionFactory(user=user, account=account, type="expense", amount=Decimal("2500.00"))
+
+    response = auth_client.get(reverse("account-detail", args=[account.id]))
+
+    assert response.status_code == 200
+    assert response.data["balance"] == "7500.00"
 
 
 def test_create_account_with_unknown_type_returns_400(auth_client):

@@ -1,22 +1,39 @@
+from decimal import Decimal
+
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .filters import TransactionFilter
-from .models import Account, Category, Transaction
-from .serializers import AccountSerializer, CategorySerializer, TransactionSerializer
-from .services import delete_account, delete_category
+from .models import Category, Transaction
+from .serializers import (
+    AccountSerializer,
+    CategorySerializer,
+    TransactionSerializer,
+    TransferSerializer,
+)
+from .services import (
+    create_transfer,
+    delete_account,
+    delete_category,
+    delete_transaction,
+    get_accounts_with_balance,
+)
 
 
 class AccountViewSet(viewsets.ModelViewSet):
     serializer_class = AccountSerializer
 
     def get_queryset(self):
-        return Account.objects.filter(user=self.request.user)
+        return get_accounts_with_balance(self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        account = serializer.save(user=self.request.user)
+        # A new account has no transactions yet.
+        account.balance = Decimal("0")
 
     def perform_destroy(self, instance):
         delete_account(instance)
@@ -54,3 +71,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def perform_destroy(self, instance):
+        delete_transaction(instance)
+
+
+class TransferView(APIView):
+    def post(self, request):
+        serializer = TransferSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        transfer = create_transfer(user=request.user, **serializer.validated_data)
+        return Response(TransferSerializer(transfer).data, status=status.HTTP_201_CREATED)

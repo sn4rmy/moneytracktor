@@ -1,11 +1,11 @@
 # moneytracktor
 
 A REST API for tracking personal finances. You can add your accounts (cash, card, deposit),
-write down income and expenses, move money between accounts and see the balance of each one.
-All amounts are in tenge (KZT).
+write down income and expenses, move money between accounts, see the balance of each one
+and get simple reports. All amounts are in tenge (KZT).
 
-I'm building this project to learn Django REST Framework. It's not finished yet: reports,
-budgets with email alerts, CSV export and Swagger docs are next.
+I'm building this project to learn Django REST Framework. It's not finished yet: budgets
+with email alerts, CSV export and Swagger docs are next.
 
 ## Stack
 
@@ -72,6 +72,9 @@ Everything except register and token needs the header `Authorization: Bearer <ac
 | GET, POST | /api/transactions | List transactions, or create one |
 | GET, PUT, PATCH, DELETE | /api/transactions/{id} | One transaction |
 | POST | /api/transfers | Move money between two of your accounts |
+| GET | /api/reports/summary?date_from=&date_to= | Income, expenses and total for a period |
+| GET | /api/reports/by-category?date_from=&date_to= | Expenses by category for a period |
+| GET | /api/reports/monthly?year= | Income and expenses by month |
 
 A few rules:
 
@@ -79,6 +82,9 @@ A few rules:
 - an account or a category that has transactions can't be deleted (400)
 - you can't transfer money to the same account (400)
 - transactions created by a transfer can't be edited or deleted (400)
+- reports don't count transfers, because a transfer is not income or an expense
+- report parameters are required (`date_from` and `date_to` in `YYYY-MM-DD`, or `year`),
+  without them the API returns 400
 
 The transaction list shows 20 items per page. Filters: `date_from`, `date_to`, `account`,
 `category`, `type` (`income` or `expense`), `search` (searches in the note) and
@@ -119,6 +125,17 @@ After that `GET /api/accounts` shows the new balances:
 ]
 ```
 
+Get a summary for October:
+
+```bash
+curl "http://localhost:8000/api/reports/summary?date_from=2026-10-01&date_to=2026-10-31" \
+  -H "Authorization: Bearer <access>"
+```
+
+```json
+{"income": "250000.00", "expense": "2500.00", "total": "247500.00"}
+```
+
 ## Design decisions
 
 - Money is stored as `Decimal`, not `float`, so there are no rounding errors
@@ -127,5 +144,7 @@ After that `GET /api/accounts` shows the new balances:
   (income minus expenses) in one SQL query, so it can't get out of sync.
 - A transfer saves a transfer record and two transactions (an expense on one account and
   an income on the other) inside `transaction.atomic`. If something fails, nothing is saved.
+- Reports are calculated by the database (`aggregate` and `annotate` turn into `SUM` and
+  `GROUP BY`), not by loops in Python. Transfers are excluded with `transfer__isnull=True`.
 - Business logic lives in `services.py`. Views only take the request and return the response.
 - Someone else's object returns 404, not 403, so you can't even tell that it exists.

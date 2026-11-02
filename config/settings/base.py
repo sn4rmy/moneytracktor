@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "users",
     "finance",
     "budgets",
+    "reports",
 ]
 
 MIDDLEWARE = [
